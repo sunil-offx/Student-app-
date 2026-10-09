@@ -1,0 +1,39 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Local backend data
+eduportal_backend/*.db
+eduportal_backend/*.db-*
+eduportal_backend/uploads/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/build/
+coverage/
+
+# Local IDE and generated artifacts
+.DS_Store
+.idea/
+*.iml
+EduPortal-Standalone.apk

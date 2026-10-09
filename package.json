@@ -1,0 +1,15 @@
+{
+  "name": "student-applicaton-v01",
+  "version": "1.0.0",
+  "description": "AcademyAlys is a production-grade Learning Management System (LMS) strictly engineered for **Classes 6 to 10**, adhering to the core organizational model: $$\\text{ADMIN} \\longrightarrow \\text{PERMISSIONS} \\longrightarrow \\text{TEACHER} \\longrightarrow \\text{CONTENT} \\longrightarrow \\text{STUDENT}$$",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4"
+  }
+}

@@ -1,0 +1,5 @@
+package com.eduportal.eduportal_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
