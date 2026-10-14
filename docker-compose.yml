@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  # EduPortal FastAPI Backend Service
+  api:
+    build:
+      context: ./eduportal_backend
+      dockerfile: Dockerfile
+    container_name: eduportal-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - SECRET_KEY=change-this-super-secret-key-in-production-32-chars
+      - AUTO_SEED=true
+      - UPLOAD_DIR=/app/uploads
+      # Uncomment DATABASE_URL below if using the PostgreSQL service:
+      # - DATABASE_URL=postgresql://eduportal:eduportal_secret@db:5432/eduportal
+      # Optional: To bootstrap initial production admin user
+      # - ADMIN_USERNAME=admin
+      # - ADMIN_PASSWORD=admin_super_secret_password_123
+      # - ADMIN_EMAIL=admin@academyalys.edu
+    volumes:
+      - eduportal-uploads:/app/uploads
+      - eduportal-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Optional PostgreSQL Database (Use with profile or uncomment)
+  db:
+    image: postgres:15-alpine
+    container_name: eduportal-postgres
+    restart: unless-stopped
+    profiles:
+      - postgres
+      - full
+    environment:
+      POSTGRES_DB: eduportal
+      POSTGRES_USER: eduportal
+      POSTGRES_PASSWORD: eduportal_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - eduportal-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eduportal -d eduportal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional Flutter Web Frontend (Served with Nginx reverse proxy on port 3000)
+  web:
+    build:
+      context: ./eduportal_app
+      dockerfile: Dockerfile
+    container_name: eduportal-web
+    restart: unless-stopped
+    profiles:
+      - web
+      - full
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  eduportal-uploads:
+    name: eduportal-uploads
+  eduportal-data:
+    name: eduportal-data
+  eduportal-pgdata:
+    name: eduportal-pgdata

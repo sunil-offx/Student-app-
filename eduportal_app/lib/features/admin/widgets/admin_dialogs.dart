@@ -781,6 +781,9 @@ class AdminDialogs {
   // 4. ADD SUBJECT SHEET
   // ──────────────────────────────────────────────────────────────────────────
   static void showAddSubjectSheet(BuildContext context, AdminProvider ap) {
+    if (ap.classes.isEmpty) {
+      ap.fetchClasses();
+    }
     final nameCtrl = TextEditingController();
     final codeCtrl = TextEditingController();
     ClassModel? selectedClass = ap.classes.isNotEmpty ? ap.classes.first : null;

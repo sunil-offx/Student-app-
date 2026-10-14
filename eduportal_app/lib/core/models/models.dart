@@ -171,19 +171,24 @@ class SubjectModel {
     this.classes = const [],
   });
 
-  factory SubjectModel.fromJson(Map<String, dynamic> json) => SubjectModel(
-        id: json['id'] ?? 0,
-        name: json['name'] ?? '',
-        code: json['code'] ?? '',
-        className: json['class_name'] ?? '',
-        classId: json['class_id'] ?? 0,
-        iconColor: json['icon_color'],
-        description: json['description'],
-        teacher: json['teacher'] != null ? TeacherInfo.fromJson(json['teacher']) : null,
-        classes: (json['classes'] as List<dynamic>? ?? [])
-            .map((className) => className.toString())
-            .toList(),
-      );
+  factory SubjectModel.fromJson(Map<String, dynamic> json) {
+    final classesList = (json['classes'] as List<dynamic>? ?? [])
+        .map((className) => className.toString())
+        .toList();
+    final rawClassName = json['class_name']?.toString() ?? '';
+    final fallbackClassName = classesList.isNotEmpty ? classesList.first : '';
+    return SubjectModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      code: json['code'] ?? '',
+      className: rawClassName.isNotEmpty ? rawClassName : fallbackClassName,
+      classId: json['class_id'] ?? 0,
+      iconColor: json['icon_color'],
+      description: json['description'],
+      teacher: json['teacher'] != null ? TeacherInfo.fromJson(json['teacher']) : null,
+      classes: classesList,
+    );
+  }
 }
 
 class TeacherInfo {

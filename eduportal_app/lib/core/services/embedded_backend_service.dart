@@ -755,13 +755,15 @@ class EmbeddedBackendService {
   Future<Map<String, dynamic>> _adminCreateSubject(Map<String, dynamic> data) async {
     final subjects = (_db['subjects'] as List).cast<Map<String, dynamic>>();
     final newId = (subjects.map((s) => s['id'] as int).fold(0, (a, b) => a > b ? a : b)) + 1;
+    final dynamic rawClassId = data['class_id'] ?? (data['class_ids'] is List && (data['class_ids'] as List).isNotEmpty ? data['class_ids'][0] : 5);
+    final int classId = _parseInt(rawClassId) ?? 5;
     final newSub = {
       'id': newId,
       'name': data['name'],
       'code': data['code'],
       'icon_color': data['icon_color'] ?? '#4F46E5',
       'description': data['description'] ?? '',
-      'class_id': data['class_id'] ?? 5,
+      'class_id': classId,
     };
     subjects.add(newSub);
     await _save();
@@ -1409,6 +1411,7 @@ class EmbeddedBackendService {
       'code': s['code'],
       'class_id': s['class_id'] ?? 5,
       'class_name': klass['name'],
+      'classes': [klass['name']],
       'icon_color': s['icon_color'] ?? '#4F46E5',
       'description': s['description'] ?? '',
       'teacher': {'id': teacher['id'], 'full_name': teacher['full_name']},

@@ -114,6 +114,48 @@ flutter run -d windows    # Windows Desktop
 flutter run -d android    # Android
 ```
 
+### 2.1. Open the local web app on phones over Wi-Fi
+
+The Flutter debug server uses plain HTTP. Mobile browsers do not provide secure token storage to an HTTP page opened by a LAN IP, so use the local HTTPS server below instead.
+
+1. Keep the FastAPI backend running on port `8000`, and build the web client with its API URL set to the same HTTPS origin. This makes the shared link work on new devices without configuring **Connect live backend**:
+
+   ```powershell
+   cd eduportal_app
+   flutter build web --release --dart-define=API_BASE_URL=https://192.168.0.133:3001/api
+   cd ..
+   ```
+
+2. Generate a local certificate for this computer's current Wi-Fi IPv4 address:
+
+   ```powershell
+   .\scripts\setup-lan-https.ps1 -LanIp 192.168.0.133
+   ```
+
+   Replace `192.168.0.133` with the address shown by `ipconfig` if it has changed. This adds a local CA certificate to the current Windows user's trust store. Its private key stays in the Windows certificate store; local certificate and key files are excluded from Git.
+
+3. While the existing Flutter web server is still running on port `3000`, open `http://192.168.0.133:3000/lan-ca.cer` on each phone and install the downloaded certificate as a trusted CA certificate. Android's setting is usually under **Settings → Security & privacy → More security settings → Encryption & credentials → Install a certificate → CA certificate**; labels vary by device. Only install this certificate on devices you control.
+
+4. Leave the Flutter web server running so it continues to provide the certificate download, then start the HTTPS server on port `3001` from the project root:
+
+   ```powershell
+   $env:LAN_IP = "192.168.0.133"
+   $env:PORT = "3001"
+   npm run serve:lan:https
+   ```
+
+5. Open `https://192.168.0.133:3001` on the phones. The app uses its built-in API URL, and the HTTPS server securely proxies `/api` requests to the local FastAPI backend. **Connect live backend** remains available if you later want to override the configured server.
+
+6. To start the local API and HTTPS website automatically whenever you sign in to Windows, register the background task once:
+
+   ```powershell
+   .\scripts\install-local-stack-task.ps1
+   ```
+
+   The task keeps both services running and writes diagnostic logs under `logs\local-stack`. Your PC must be powered on, signed in, awake, and connected to the same Wi-Fi; this is a local network link, not a public website. Reserve `192.168.0.133` for this PC in your router so the address and certificate remain valid.
+
+This local certificate is for trusted devices on your LAN only; do not expose this development server to the public internet.
+
 ### 3. Deploy the live backend on Render
 
 The `render.yaml` Blueprint creates the FastAPI service and PostgreSQL database. From the project repository, create a new Blueprint in Render and select this repository. During setup, provide:

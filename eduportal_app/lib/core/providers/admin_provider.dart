@@ -284,6 +284,8 @@ class AdminProvider extends ChangeNotifier {
         if (sectionId != null) 'section_id': sectionId,
       });
       await fetchClassTabs(classId);
+      await fetchSubjects();
+      await fetchTeachersDirectory();
       return true;
     } catch (e) {
       _error = e.toString();
@@ -375,6 +377,11 @@ class AdminProvider extends ChangeNotifier {
         if (classId != null) 'class_id': classId,
       });
       await fetchSubjects();
+      await fetchDashboard();
+      await fetchClasses();
+      if (_activeClassTabs != null) {
+        await fetchClassTabs(_activeClassTabs!.classId);
+      }
       return true;
     } catch (e) {
       _error = e.toString();

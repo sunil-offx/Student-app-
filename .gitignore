@@ -37,3 +37,9 @@ coverage/
 .idea/
 *.iml
 EduPortal-Standalone.apk
+
+# Local Wi-Fi HTTPS certificates and private keys
+eduportal_app/lan-certs/
+
+# Local background-server logs
+logs/local-stack/

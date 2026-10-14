@@ -732,15 +732,19 @@ def list_curriculum_subjects(db: Session = Depends(get_db), _=Depends(get_admin)
     for s in subjects:
         teachers = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.subject_id == s.id).all()
         t_infos = [{"id": a.teacher.id, "full_name": a.teacher.full_name} for a in teachers if a.teacher]
+        first_class = s.classes[0] if s.classes else s.legacy_klass
+        assigned_teacher = s.teacher or (teachers[0].teacher if teachers else None)
         results.append({
             "id": s.id,
             "name": s.name,
             "code": s.code,
             "icon_color": s.icon_color,
             "description": s.description or "",
+            "class_id": first_class.id if first_class else s.class_id,
+            "class_name": first_class.name if first_class else "",
             "classes": [c.name for c in s.classes],
             "teachers": t_infos,
-            "teacher": {"id": s.teacher.id, "full_name": s.teacher.full_name} if s.teacher else None,
+            "teacher": {"id": assigned_teacher.id, "full_name": assigned_teacher.full_name} if assigned_teacher else None,
         })
     return {"subjects": results}
 
@@ -766,22 +770,42 @@ def create_curriculum_subject(body: schemas.SubjectCreate, db: Session = Depends
         if len(classes) != len(set(target_class_ids)):
             raise HTTPException(404, "One or more selected classes were not found")
 
+    primary_class_id = target_class_ids[0] if target_class_ids else None
     sub = models.Subject(
         name=name,
         code=code,
         icon_color=body.icon_color or "#4F46E5",
         description=(body.description or "").strip(),
+        class_id=primary_class_id,
     )
     db.add(sub)
     try:
         sub.classes.extend(classes)
+        # Also enroll existing active students in this class
+        for c in classes:
+            active_students = db.query(models.User).join(models.StudentEnrollment).filter(
+                models.StudentEnrollment.class_id == c.id,
+                models.StudentEnrollment.enrollment_status == "active"
+            ).all()
+            for st in active_students:
+                if sub not in st.enrolled_subjects:
+                    st.enrolled_subjects.append(sub)
         db.commit()
     except Exception:
         db.rollback()
         raise
     db.refresh(sub)
 
-    return {"id": sub.id, "name": sub.name, "code": sub.code}
+    first_class = sub.classes[0] if sub.classes else sub.legacy_klass
+    return {
+        "id": sub.id,
+        "name": sub.name,
+        "code": sub.code,
+        "class_id": first_class.id if first_class else sub.class_id,
+        "class_name": first_class.name if first_class else "",
+        "classes": [c.name for c in sub.classes],
+        "icon_color": sub.icon_color,
+    }
 
 
 # ── Materials & Publishing Workflow ──────────────────────────────────────────

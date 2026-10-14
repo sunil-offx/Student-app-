@@ -7,6 +7,7 @@ import '../../../core/providers/admin_provider.dart';
 import '../../../core/models/models.dart';
 import '../../../shared/widgets/ep_card.dart';
 import '../../../shared/widgets/ep_button.dart';
+import '../widgets/admin_dialogs.dart';
 
 class AdminSubjectsTab extends StatelessWidget {
   const AdminSubjectsTab({super.key});
@@ -36,7 +37,7 @@ class AdminSubjectsTab extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => _showAddSubjectSheet(context, ap),
+                    onTap: () => AdminDialogs.showAddSubjectSheet(context, ap),
                     child: Container(
                       height: 36,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -135,7 +136,9 @@ class AdminSubjectsTab extends StatelessWidget {
                                         ),
                                       ),
                                       Text(
-                                        '${s.code} · ${s.className}',
+                                        s.className.isNotEmpty
+                                            ? '${s.code} · ${s.className}'
+                                            : s.code,
                                         style: const TextStyle(
                                           color: AppColors.textMuted,
                                           fontSize: 12,
@@ -225,120 +228,6 @@ class AdminSubjectsTab extends StatelessWidget {
           ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
-    );
-  }
-
-  void _showAddSubjectSheet(BuildContext context, AdminProvider ap) {
-    final nameCtrl = TextEditingController();
-    final codeCtrl = TextEditingController();
-    ClassModel? selectedClass;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: AppColors.divider,
-                      borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text('Add New Subject',
-                  style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration:
-                    const InputDecoration(hintText: 'Subject name (e.g. Mathematics)'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: codeCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                    hintText: 'Subject code (e.g. MATH10)'),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.divider),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<ClassModel>(
-                    value: selectedClass,
-                    hint: const Text('Assign to class',
-                        style: TextStyle(
-                            color: AppColors.textMuted, fontSize: 14)),
-                    isExpanded: true,
-                    dropdownColor: AppColors.cardBg,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary, fontSize: 14),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textMuted),
-                    items: ap.classes.map((c) {
-                      return DropdownMenuItem(value: c, child: Text(c.name));
-                    }).toList(),
-                    onChanged: (c) => setLocal(() => selectedClass = c),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              EpGradientButton(
-                label: 'Create Subject',
-                gradient: AppColors.indigoGradient,
-                onTap: () async {
-                  if (nameCtrl.text.isEmpty ||
-                      codeCtrl.text.isEmpty ||
-                      selectedClass == null) {
-                    return;
-                  }
-                  Navigator.pop(ctx);
-                  final ok = await ap.createSubject(
-                    name: nameCtrl.text.trim(),
-                    code: codeCtrl.text.trim(),
-                    classId: selectedClass!.id,
-                  );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                          ok ? 'Subject created!' : 'Failed to create subject'),
-                      backgroundColor: ok ? AppColors.emerald : AppColors.rose,
-                      behavior: SnackBarBehavior.floating,
-                    ));
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -432,6 +321,7 @@ class AdminSubjectsTab extends StatelessWidget {
                         final ok = await ap.assignSubjectToTeacher(
                           subjectId: subject.id,
                           teacherId: selectedTeacher!.id,
+                          classId: subject.classId != 0 ? subject.classId : null,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
